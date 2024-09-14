@@ -277,6 +277,79 @@ def visualization(tracks, scores, args):
 		args.nDataLoaderThread, os.path.join(args.pyaviPath,'video_out.avi'))) 
 	output = subprocess.call(command, shell=True, stdout=None)
 
+# def visualization(tracks, scores, args):
+#     # Paths
+#     frame_path = os.path.join(args.pyframesPath, '*.jpg')
+#     audio_path = os.path.join(args.pyaviPath, 'audio.wav')
+#     video_only_path = os.path.join(args.pyaviPath, 'video_only.avi')
+#     video_out_path = os.path.join(args.pyaviPath, 'video_out.avi')
+
+#     # Load all frames
+#     flist = glob.glob(frame_path)
+#     flist.sort()
+    
+#     # Prepare the faces list
+#     faces = [[] for _ in range(len(flist))]
+    
+#     for tidx, track in enumerate(tracks):
+#         score = scores[tidx]
+#         for fidx, frame in enumerate(track['track']['frame'].tolist()):
+#             s = score[max(fidx - 2, 0): min(fidx + 3, len(score) - 1)]  # average smoothing
+#             s = np.mean(s)
+#             if 0 <= frame < len(faces):  # Ensure frame index is valid
+#                 faces[frame].append({
+#                     'track': tidx,
+#                     'score': float(s),
+#                     's': track['proc_track']['s'][fidx],
+#                     'x': track['proc_track']['x'][fidx],
+#                     'y': track['proc_track']['y'][fidx]
+#                 })
+
+#     # Initialize video writer
+#     firstImage = cv2.imread(flist[0])
+#     fw, fh = firstImage.shape[1], firstImage.shape[0]
+
+#     # Calculate the target height and width for cropping
+#     target_height = 1080
+#     target_width = int((target_height * 9) / 16)  # 9:16 ratio
+    
+#     # Define the video writer for cropped output
+#     vOut = cv2.VideoWriter(video_only_path, cv2.VideoWriter_fourcc(*'XVID'), 25, (target_width, target_height))
+
+#     # Process each frame
+#     for fidx, fname in tqdm.tqdm(enumerate(flist), total=len(flist)):
+#         image = cv2.imread(fname)
+#         for face in faces[fidx]:
+#             # Calculate cropping coordinates
+#             center_x = int(face['x'])
+#             center_y = int(face['y'])
+#             s = int(face['s'])
+
+#             # Define the crop region
+#             x1 = max(center_x - target_width // 2, 0)
+#             x2 = min(center_x + target_width // 2, fw)
+#             y1 = max(center_y - target_height // 2, 0)
+#             y2 = min(center_y + target_height // 2, fh)
+
+#             # Crop the image
+#             crop = image[y1:y2, x1:x2]
+            
+#             # Resize cropped image to target dimensions (720p)
+#             resized_crop = cv2.resize(crop, (target_width, target_height))
+
+#             # Write the resized crop to the output video
+#             vOut.write(resized_crop)
+
+#     # Release the video writer
+#     vOut.release()
+
+#     # Combine the cropped video with the original audio
+#     command = (
+#         f"ffmpeg -y -i {video_only_path} -i {audio_path} -threads {args.nDataLoaderThread} "
+#         f"-c:v copy -c:a copy {video_out_path} -loglevel panic"
+#     )
+#     subprocess.call(command, shell=True, stdout=None)
+
 def evaluate_col_ASD(tracks, scores, args):
 	txtPath = args.videoFolder + '/col_labels/fusion/*.txt' # Load labels
 	predictionSet = {}
