@@ -409,11 +409,17 @@ def visualization(tracks, scores, args):
 #         center_y = int(best_face['y'])
 #         s = int(best_face['s'])
 
-#         # Define the crop region
+#         # Calculate the crop region
 #         x1 = max(center_x - target_width // 2, 0)
 #         x2 = min(center_x + target_width // 2, fw)
 #         y1 = max(center_y - target_height // 2, 0)
 #         y2 = min(center_y + target_height // 2, fh)
+
+#         # Handle boundary issues
+#         if x2 - x1 < target_width:
+#             x1 = max(0, x2 - target_width)
+#         if y2 - y1 < target_height:
+#             y1 = max(0, y2 - target_height)
 
 #         # Ensure the crop region is valid
 #         if x2 <= x1 or y2 <= y1:
@@ -424,8 +430,24 @@ def visualization(tracks, scores, args):
 #         # Crop the image
 #         crop = image[y1:y2, x1:x2]
 
-#         # Resize cropped image to target dimensions
-#         resized_crop = cv2.resize(crop, (target_width, target_height))
+#         # Resize cropped image to target dimensions with padding
+#         crop_h, crop_w = crop.shape[:2]
+#         aspect_ratio = target_width / target_height
+
+#         if crop_w / crop_h > aspect_ratio:
+#             # Crop width is too large, add padding to height
+#             new_w = int(crop_h * aspect_ratio)
+#             new_h = crop_h
+#             pad_left = (crop_w - new_w) // 2
+#             pad_right = crop_w - new_w - pad_left
+#             resized_crop = cv2.resize(crop[:, pad_left:crop_w - pad_right], (target_width, target_height))
+#         else:
+#             # Crop height is too large, add padding to width
+#             new_h = int(crop_w / aspect_ratio)
+#             new_w = crop_w
+#             pad_top = (crop_h - new_h) // 2
+#             pad_bottom = crop_h - new_h - pad_top
+#             resized_crop = cv2.resize(crop[pad_top:crop_h - pad_bottom, :], (target_width, target_height))
 
 #         # Write the resized crop to the output video
 #         vOut.write(resized_crop)
@@ -439,6 +461,7 @@ def visualization(tracks, scores, args):
 #         f"-c:v copy -c:a copy {video_out_path} -loglevel panic"
 #     )
 #     subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
 def evaluate_col_ASD(tracks, scores, args):
 	txtPath = args.videoFolder + '/col_labels/fusion/*.txt' # Load labels
 	predictionSet = {}
