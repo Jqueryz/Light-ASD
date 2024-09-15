@@ -278,6 +278,9 @@ def visualization(tracks, scores, args):
 		args.nDataLoaderThread, os.path.join(args.pyaviPath,'video_out.avi'))) 
 	output = subprocess.call(command, shell=True, stdout=None)
 
+
+     ##CROPPER only
+
 # def visualization(tracks, scores, args):
 #     # Paths
 #     frame_path = os.path.join(args.pyframesPath, '*.jpg')
@@ -351,6 +354,91 @@ def visualization(tracks, scores, args):
 #     )
 #     subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
+       ##CROPPER WITH HIGHSCORES
+# def visualization(tracks, scores, args):
+#     # Paths
+#     frame_path = os.path.join(args.pyframesPath, '*.jpg')
+#     audio_path = os.path.join(args.pyaviPath, 'audio.wav')
+#     video_only_path = os.path.join(args.pyaviPath, 'video_only.avi')
+#     video_out_path = os.path.join(args.pyaviPath, 'video_out.avi')
+
+#     # Load all frames
+#     flist = glob.glob(frame_path)
+#     flist.sort()
+
+#     # Prepare the faces list
+#     faces = [[] for _ in range(len(flist))]
+
+#     for tidx, track in enumerate(tracks):
+#         score = scores[tidx]
+#         for fidx, frame in enumerate(track['track']['frame'].tolist()):
+#             s = score[max(fidx - 2, 0): min(fidx + 3, len(score) - 1)]  # average smoothing
+#             s = np.mean(s)
+#             if 0 <= frame < len(faces):  # Ensure frame index is valid
+#                 faces[frame].append({
+#                     'track': tidx,
+#                     'score': float(s),
+#                     's': track['proc_track']['s'][fidx],
+#                     'x': track['proc_track']['x'][fidx],
+#                     'y': track['proc_track']['y'][fidx]
+#                 })
+
+#     # Initialize video writer
+#     firstImage = cv2.imread(flist[0])
+#     fw, fh = firstImage.shape[1], firstImage.shape[0]
+
+#     # Set fixed width and calculate height for 9:16 aspect ratio
+#     target_width = 720
+#     target_height = int(target_width * 16 / 9)  # 9:16 ratio
+
+#     # Define the video writer for cropped output
+#     vOut = cv2.VideoWriter(video_only_path, cv2.VideoWriter_fourcc(*'mp4v'), 25, (target_width, target_height))
+
+#     # Process each frame
+#     for fidx, fname in tqdm.tqdm(enumerate(flist), total=len(flist)):
+#         image = cv2.imread(fname)
+
+#         if not faces[fidx]:
+#             # If no faces detected, write a black frame or handle as needed
+#             vOut.write(np.zeros((target_height, target_width, 3), dtype=np.uint8))
+#             continue
+
+#         # Find the face with the highest score
+#         best_face = max(faces[fidx], key=lambda face: face['score'])
+#         center_x = int(best_face['x'])
+#         center_y = int(best_face['y'])
+#         s = int(best_face['s'])
+
+#         # Define the crop region
+#         x1 = max(center_x - target_width // 2, 0)
+#         x2 = min(center_x + target_width // 2, fw)
+#         y1 = max(center_y - target_height // 2, 0)
+#         y2 = min(center_y + target_height // 2, fh)
+
+#         # Ensure the crop region is valid
+#         if x2 <= x1 or y2 <= y1:
+#             # Write a black frame if the crop region is invalid
+#             vOut.write(np.zeros((target_height, target_width, 3), dtype=np.uint8))
+#             continue
+
+#         # Crop the image
+#         crop = image[y1:y2, x1:x2]
+
+#         # Resize cropped image to target dimensions
+#         resized_crop = cv2.resize(crop, (target_width, target_height))
+
+#         # Write the resized crop to the output video
+#         vOut.write(resized_crop)
+
+#     # Release the video writer
+#     vOut.release()
+
+#     # Combine the cropped video with the original audio
+#     command = (
+#         f"ffmpeg -y -i {video_only_path} -i {audio_path} -threads {args.nDataLoaderThread} "
+#         f"-c:v copy -c:a copy {video_out_path} -loglevel panic"
+#     )
+#     subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 def evaluate_col_ASD(tracks, scores, args):
 	txtPath = args.videoFolder + '/col_labels/fusion/*.txt' # Load labels
 	predictionSet = {}
